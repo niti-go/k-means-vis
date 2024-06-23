@@ -4,4 +4,6 @@ An interactive visualization of the k-means algorithm for identifying clusters i
 K-Means Clustering is an unsupervised learning technique used to classify data samples
 based on feature similarity to other data.
 
-This visualization is created using matplotlib in Python.
+This visualization is created using matplotlib in Python. Users can add data points,
+add initial centroid positions, and see the assignments of points to clusters change
+with each iteration of the algorithm.
