@@ -7,3 +7,5 @@ based on feature similarity to other data.
 This visualization is created using matplotlib in Python. Users can add data points,
 add initial centroid positions, and see the assignments of points to clusters change
 with each iteration of the algorithm.
+
+Example Snapshot:
