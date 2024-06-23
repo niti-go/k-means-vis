@@ -3,38 +3,35 @@ from matplotlib.widgets import Button
 from scipy.spatial import Voronoi, voronoi_plot_2d
 import numpy as np
 
-# TODO: Add a restart button
-# check that plot actually works with many colors
-# maybe add decision boundaries
-
+#Set up the graph
 fig, ax = plt.subplots()
 fig.subplots_adjust(bottom = 0.2) #Move graph up so buttons have room
-
 fig.suptitle("K-Means Clustering Visualization")
 ax.set_title('Click to add data points') #Initially, the user is adding data points
 ax.set_xlim(0, 10)
 ax.set_ylim(0, 10)
 
-#the x-values of the data points
+#The x and y values of the data points
 x_points = []
-#the y-values of the data points
 y_points = []
-#the current x-values of the centroids
+#The current x and y-values of the centroids
 x_centroids = []
-#the current y-values of the centroids
 y_centroids = []
-#color list of centroids
+#List of cluster colors
 colors = ["r", "g", "m","y","c", "pink", "orange", "purple", "b", "brown", "gray"]
 num_colors = len(colors)
 #cluster assignments:
 #a dictionary where cluster_assignments[i] is a list of all points'
 #indices whose closest centroid is centroid i
 cluster_assignments = {a:[] for a in range(len(x_centroids))}
-#the current "stage" of the program/process that we are currently in
-#Either adding "data", adding "centroids", or "learning" clusters
+#The current "stage" of the program that we are currently in
+#Either adding "data", adding "centroids", "updating centroids", or "assigning clusters"
 stage = "data"
 
 def restart_plot(event):
+   """
+   Resets the graph's data upon the "Reset" button being clicked.
+   """
    global x_points
    global y_points
    global x_centroids
@@ -52,18 +49,15 @@ def restart_plot(event):
    ax.cla()
    plt.show()
 
-# Update the points in the plot to contain all of (x_lst,y_lst)
-def update_points(x_lst, y_lst, color, marker="o"):
-      ax.scatter(x_lst, y_lst, c=color, marker=marker)
-      plt.draw()
-
 def update_plot(only_data = False):
+   """
+   Updates the graph visualization.
+   """
    ax.cla() #clear the old plot
    ax.set_xlim(0, 10)
    ax.set_ylim(0, 10)
-   #loop over each centroid
-   #draw each centroid
-   #draw each point that is assigned to that centroid in that centroid's color
+   #Looping over each centroid, draw each centroid and draw each point that is
+   #assigned to that centroid in that centroid's color
    if only_data:
       ax.set_title("Click to add data points")
       ax.scatter(x_points, y_points, c="b", marker="o", s=30)
@@ -90,11 +84,8 @@ def update_plot(only_data = False):
 
 def assign_clusters():
    """
-   Assigns each of the n data points to their closest centroid of m centroids.
-   Returns a nxm matrix where matrix[i][j] is 1 if the centroid j is the closest to i, 0 otherwise.
-   or
-   Updates the dictionary 'cluster_assignments' where cluster_assignments[i] is a list of all points' 
-   indices whose closest centroid is centroid i
+   Updates the dictionary 'cluster_assignments' where cluster_assignments[i] 
+   is a list of all points' indices whose closest centroid is centroid i.
    Returns True if converged, False otherwise
    """
    #each point is assigned to the centroid closest to it
@@ -133,11 +124,11 @@ def assign_clusters():
 
 def update_centroids():
    """
-   Updates x_centroids and y_centroids to be the means of data points assigned to each old centroid
+   Updates x_centroids and y_centroids to be the means of data points 
+   assigned to each prior centroid
    """
    global x_centroids
    global y_centroids
-   #loop through each column (centroid), looking at which values are 1 (if np matrix)
    #Initialize lists that are the same lengths as the old centroid lists
    new_x_centroids = [0 for i in range (len(x_centroids))]
    new_y_centroids = [0 for i in range (len(x_centroids))]
@@ -147,7 +138,7 @@ def update_centroids():
       all_x = [x_points[i] for i in point_lst]
       all_y = [y_points[i] for i in point_lst]
       #Calculate the mean point of the cluster
-      if len(all_x) != 0 and len(all_y) != 0: #(unless the cluster has no points)
+      if len(all_x) != 0 and len(all_y) != 0: #only if the cluster has some points
         mean_x = sum(all_x)/len(all_x)
         mean_y = sum(all_y)/len(all_y)
         #Assign this mean as the new centroid
@@ -155,16 +146,18 @@ def update_centroids():
         new_y_centroids[centroid]=(mean_y)
    x_centroids = new_x_centroids
    y_centroids = new_y_centroids
-   #Draw the new centroids on the graph
-   print("about to draw new centroids!")
-   #update_points(x_centroids, y_centroids, color="r", marker="x")
+   #Draw the updated centroids on the graph
    update_plot()
-   #for those indices of x_points,y_points, calculate the mean
    
 #for each cluster assigned to a centroid, calculate the mean and store it as the new centroid
 
 # Clicking on the graph will add points
 def on_mouse_click(event):
+    """
+    Add points to the graph where the mouse was clicked.
+    Adds data points or initial centroids to the graph,
+    depending on the stage of the program the user is in.
+    """
     if event.inaxes == ax:
         if stage == "data":
           x_points.append(event.xdata)
@@ -176,10 +169,13 @@ def on_mouse_click(event):
            y_centroids.append(event.ydata)
            #update_points(x_centroids, y_centroids, color="r", marker="x")
            update_plot(only_data = True)
-    else:
-        print("Not in axes!")
 
 def on_done_button_press(event):
+    """
+    Proceeds to the next part of the algorithm once the 'Done' button is pressed.
+    If data has already been added to the graph, proceeds to place initial centroids.
+    If both data and centroids have been added, proceed to assigning clusters.
+    """
     global stage
     if stage == "data":
       if not x_points:
@@ -204,10 +200,9 @@ def on_done_button_press(event):
        update_centroids()
        bdone.label.set_text("Assign Clusters")
        stage = "assigning clusters"
-    print("Button pressed!")
     plt.show()
 
-#Display buttons
+#Display Done and Reset buttons
 ax_button = plt.axes([0.4, 0.05, 0.3, 0.075]) #x0,y0,width,height
 bdone = Button(ax_button, "Done")
 ax_reset_button=plt.axes([0.1,0.05,0.2,0.075])
@@ -215,8 +210,7 @@ breset = Button(ax_reset_button, "Reset")
 bdone.on_clicked(on_done_button_press)
 breset.on_clicked(restart_plot)
 
-# Connect the click event handler
+# Connect click event handler
 cid = fig.canvas.mpl_connect('button_press_event', on_mouse_click)
 
-# Display the plot
 plt.show()
